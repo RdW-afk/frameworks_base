@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 AfterLife Project
+ * Copyright (C) 2024 AfterLife Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,18 +25,15 @@ import android.provider.*;
 import android.util.*;
 import android.view.*;
 import android.widget.*;
-
-import com.android.settingslib.widget.R;
 import com.declan.prjct.utils.DeclanUtils;
 
 public class DeclanCategoryLayout extends LinearLayout {
 	
-	private boolean iconEnabled, allCapsEnabled, boldEnabled, bgEnabled, dividerEnabled;
-	private int cornerTopLeft, cornerTopRight, cornerBotRight, cornerBotLeft, paddingTop, paddingBot, paddingLeft, paddingRight,
-	iconStyle, backgroundColorStyle, backgroundCustomColor;
+	private boolean backgroundEnabled, iconEnabled, allCapsEnabled, boldEnabled;
+	private int backgroundStyle, iconStyle, cornerTopLeft, cornerTopRight, cornerBotRight, cornerBotLeft, paddingTop, paddingBot, paddingLeft, paddingRight;
 	
 	private ImageView iconView;
-	private View iconView1, dividerView;
+	private View iconView1;
 	private TextView titleView;
 	
 	public DeclanCategoryLayout(Context context, AttributeSet attrs) {
@@ -46,21 +43,21 @@ public class DeclanCategoryLayout extends LinearLayout {
 	@Override
 	protected void onFinishInflate() {
 		super.onFinishInflate();
-		iconView = findViewById(R.id.icon);
-		iconView1 = findViewById(R.id.icon_group);
 		titleView = findViewById(android.R.id.title);
-		dividerView = findViewById(R.id.divider);
+		iconView = findViewById(android.R.id.icon);
+		iconView1 = findViewById(android.R.id.icon1);
 		new SettingsObserver(new Handler(Looper.getMainLooper())).observe();
 		updateSettings();
 	}
 	
 	private void updateSettings() {
 		ContentResolver cr = mContext.getContentResolver();
+		backgroundEnabled = Settings.System.getInt(cr, "declan_category_background_enabled", 0) == 1;
+		backgroundStyle = Settings.System.getInt(cr, "declan_category_background_style", 0);
 		iconEnabled = Settings.System.getInt(cr, "declan_category_icon_enabled", 0) == 1;
 		iconStyle = Settings.System.getInt(cr, "declan_category_icon_style", 0);
 		allCapsEnabled = Settings.System.getInt(cr, "declan_category_allcaps_enabled", 0) == 1;
 		boldEnabled = Settings.System.getInt(cr, "declan_category_bold_enabled", 0) == 1;
-		bgEnabled = Settings.System.getInt(cr, "declan_category_bg_enabled", 0) == 1;
 		cornerTopLeft = DeclanUtils.getValueInDp(Settings.System.getInt(cr, "declan_category_corner_topL", 8));
 		cornerTopRight = DeclanUtils.getValueInDp(Settings.System.getInt(cr, "declan_category_corner_topR", 8));
 		cornerBotLeft = DeclanUtils.getValueInDp(Settings.System.getInt(cr, "declan_category_corner_botL", 8));
@@ -69,16 +66,58 @@ public class DeclanCategoryLayout extends LinearLayout {
 		paddingRight = DeclanUtils.getValueInDp(Settings.System.getInt(cr, "declan_category_padding_right", 4));
 		paddingTop = DeclanUtils.getValueInDp(Settings.System.getInt(cr, "declan_category_padding_top", 4));
 		paddingBot = DeclanUtils.getValueInDp(Settings.System.getInt(cr, "declan_category_padding_bot", 4));
-		backgroundColorStyle = Settings.System.getInt(cr, "declan_category_bg_style", 0);
-		backgroundCustomColor = Settings.System.getInt(cr, "declan_category_bg_custom_color", 0);
-		dividerEnabled = Settings.System.getInt(cr, "declan_category_divider_enabled", 0) == 1;
-		updateTextTitle();
-		updateIconStyle();
 		updateBackgroundTitle();
-		updateDividerView();
+		updateIconView();
+		updateTitleView();
 	}
 	
-	private void updateTextTitle() {
+	private void updateBackgroundTitle() {
+		int bgColor, textColor;
+		GradientDrawable backgroundDrawable = new GradientDrawable();
+		backgroundDrawable.setCornerRadii(new float[]{cornerTopLeft, cornerTopLeft, cornerTopRight, cornerTopRight, cornerBotRight, cornerBotRight, cornerBotLeft, cornerBotLeft});
+		if (backgroundStyle == 1) {
+			bgColor = DeclanUtils.getColorAttr(mContext, android.R.attr.colorAccent);
+			textColor = DeclanUtils.getColorAttr(mContext, com.android.internal.R.attr.colorSurface);
+		} else if (backgroundStyle == 2) {
+			bgColor = DeclanUtils.getColorAttr(mContext, com.android.internal.R.attr.colorAccentPrimary);
+			textColor = DeclanUtils.getColorAttr(mContext, com.android.internal.R.attr.colorAccentPrimaryVariant);
+		} else if (backgroundStyle == 3) {
+			bgColor = DeclanUtils.getColorAttr(mContext, com.android.internal.R.attr.colorAccentTertiary);
+			textColor = DeclanUtils.getColorAttr(mContext, com.android.internal.R.attr.colorAccentTertiaryVariant);
+		} else {
+			bgColor = DeclanUtils.getColorAttr(mContext, com.android.internal.R.attr.colorSurface);
+			textColor = DeclanUtils.getColorAttr(mContext, android.R.attr.colorAccent);
+		}
+		if (backgroundEnabled) {
+			backgroundDrawable.setColor(bgColor);
+			titleView.setBackground(backgroundDrawable);
+			titleView.setTextColor(textColor);
+			titleView.setPadding(paddingLeft, paddingTop, paddingRight, paddingBot);
+		} else {
+			titleView.setBackgroundResource(android.R.color.transparent);
+			titleView.setPadding(0, 0, 0, 0);
+		}
+	}
+	
+	private void updateIconView() {
+		if (iconEnabled) {
+			if (iconStyle == 1) {
+				iconView.setVisibility(View.GONE);
+				iconView1.setVisibility(View.VISIBLE);
+			} else {
+				iconView.setVisibility(View.VISIBLE);
+				iconView1.setVisibility(View.GONE);
+			}
+			LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+			titleParams.setMargins(10, 0, 0, 0);
+			titleView.setLayoutParams(titleParams);
+		} else {
+			iconView.setVisibility(View.GONE);
+			iconView1.setVisibility(View.GONE);
+		}
+	}
+	
+	private void updateTitleView() {
 		if (allCapsEnabled) {
 			titleView.setAllCaps(true);
 		} else {
@@ -91,57 +130,6 @@ public class DeclanCategoryLayout extends LinearLayout {
 		}
 	}
 	
-	private void updateIconStyle() {
-		if (iconEnabled) {
-			if (iconStyle == 1) {
-				iconView.setVisibility(View.VISIBLE);
-				iconView1.setVisibility(View.GONE);
-			} else {
-				iconView.setVisibility(View.GONE);
-				iconView1.setVisibility(View.VISIBLE);
-			}
-			LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
-			params.setMargins(10, 0, 0, 0);
-			titleView.setLayoutParams(params);
-		} else {
-			iconView.setVisibility(View.GONE);
-			iconView1.setVisibility(View.GONE);
-		}
-	}
-	
-	private void updateBackgroundTitle() {
-		GradientDrawable backgroundDrawable = new GradientDrawable();
-		backgroundDrawable.setColor(getBackgroundColor());
-		backgroundDrawable.setCornerRadii(new float[]{cornerTopLeft, cornerTopLeft, cornerTopRight, cornerTopRight, cornerBotRight, cornerBotRight, cornerBotLeft, cornerBotLeft});
-		if (bgEnabled) {
-			titleView.setBackground(backgroundDrawable);
-			titleView.setPadding(paddingLeft, paddingTop, paddingRight, paddingBot);
-		} else {
-			titleView.setBackgroundResource(android.R.color.transparent);
-			titleView.setPadding(0, 0, 0, 0);
-		}
-	}
-	
-	private void updateDividerView() {
-		if (dividerEnabled) {
-			dividerView.setVisibility(View.VISIBLE);
-			dividerView.setBackgroundColor(getBackgroundColor());
-		} else {
-			dividerView.setVisibility(View.GONE);
-			dividerView.setBackgroundResource(android.R.color.transparent);
-		}
-	}
-	
-	private int getBackgroundColor() {
-		if (backgroundColorStyle == 1) {
-			return DeclanUtils.getColorAttr(mContext, com.android.internal.R.attr.colorAccentSecondary);
-		} else if (backgroundColorStyle == 2) {
-			return backgroundCustomColor;
-		} else {
-			return DeclanUtils.getColorAttr(mContext, com.android.internal.R.attr.colorSurface);
-		}
-	}
-	
 	class SettingsObserver extends ContentObserver {
 		public SettingsObserver(Handler handler) {
 			super(handler);
@@ -149,11 +137,12 @@ public class DeclanCategoryLayout extends LinearLayout {
 		
 		public void observe() {
 			ContentResolver cr = mContext.getContentResolver();
+			cr.registerContentObserver(Settings.System.getUriFor("declan_category_background_enabled"), false, this);
+			cr.registerContentObserver(Settings.System.getUriFor("declan_category_background_style"), false, this);
 			cr.registerContentObserver(Settings.System.getUriFor("declan_category_icon_enabled"), false, this);
 			cr.registerContentObserver(Settings.System.getUriFor("declan_category_icon_style"), false, this);
 			cr.registerContentObserver(Settings.System.getUriFor("declan_category_allcaps_enabled"), false, this);
 			cr.registerContentObserver(Settings.System.getUriFor("declan_category_bold_enabled"), false, this);
-			cr.registerContentObserver(Settings.System.getUriFor("declan_category_bg_enabled"), false, this);
 			cr.registerContentObserver(Settings.System.getUriFor("declan_category_corner_topL"), false, this);
 			cr.registerContentObserver(Settings.System.getUriFor("declan_category_corner_topR"), false, this);
 			cr.registerContentObserver(Settings.System.getUriFor("declan_category_corner_botL"), false, this);
@@ -162,9 +151,6 @@ public class DeclanCategoryLayout extends LinearLayout {
 			cr.registerContentObserver(Settings.System.getUriFor("declan_category_padding_right"), false, this);
 			cr.registerContentObserver(Settings.System.getUriFor("declan_category_padding_top"), false, this);
 			cr.registerContentObserver(Settings.System.getUriFor("declan_category_padding_bot"), false, this);
-			cr.registerContentObserver(Settings.System.getUriFor("declan_category_bg_style"), false, this);
-			cr.registerContentObserver(Settings.System.getUriFor("declan_category_bg_custom_color"), false, this);
-			cr.registerContentObserver(Settings.System.getUriFor("declan_category_divider_enabled"), false, this);
 		}
 		
 		@Override

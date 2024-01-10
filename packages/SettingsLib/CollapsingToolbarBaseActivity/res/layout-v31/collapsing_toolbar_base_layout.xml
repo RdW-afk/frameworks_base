@@ -14,7 +14,7 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<androidx.coordinatorlayout.widget.CoordinatorLayout
+<declan.prjct.settings.widget.CoordinatorLayoutView
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/content_parent"
     android:layout_width="match_parent"
@@ -22,4 +22,4 @@
     android:fitsSystemWindows="true">
 
     <include layout="@layout/collapsing_toolbar_content_layout"/>
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+</declan.prjct.settings.widget.CoordinatorLayoutView>
